@@ -26,6 +26,7 @@ type spanStats struct {
 
 type reportExporter struct {
 	path     string
+	verbose  bool
 	logger   *zap.Logger
 	statsMap sync.Map // map[groupingKey]*spanStats
 	stopCh   chan struct{}
@@ -38,14 +39,24 @@ func (e *reportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) erro
 		attrs := rs.Resource().Attributes()
 
 		// 属性の抽出
-		sName, _ := attrs.Get("service.name")
-		eName, _ := attrs.Get("deployment.environment.name")
-		key := groupingKey{
-			service: sName.AsString(),
-			env:     eName.AsString(),
+		sName := "unknown"
+		if s, ok := attrs.Get("service.name"); ok {
+			sName = s.AsString()
 		}
-		if key.service == "" { key.service = "unknown" }
-		if key.env == "" { key.env = "unknown" }
+		eName := "unknown"
+		if e, ok := attrs.Get("deployment.environment.name"); ok {
+			eName = e.AsString()
+		}
+		key := groupingKey{
+			service: sName,
+			env:     eName,
+		}
+		if key.service == "" {
+			key.service = "unknown"
+		}
+		if key.env == "" {
+			key.env = "unknown"
+		}
 
 		// 統計オブジェクトの取得または生成
 		val, _ := e.statsMap.LoadOrStore(key, &spanStats{})
@@ -53,6 +64,13 @@ func (e *reportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) erro
 
 		// カウントアップ
 		count := uint64(td.SpanCount())
+		if e.verbose {
+			e.logger.Info("Processed spans",
+				zap.String("service", key.service),
+				zap.String("environment", key.env),
+				zap.Uint64("span_count", count),
+			)
+		}
 		stats.hourly.Add(count)
 		stats.daily.Add(count)
 		stats.monthly.Add(count)

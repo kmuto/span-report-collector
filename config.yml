@@ -1,0 +1,16 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  reportexporter:
+    path: "./span_report.txt"
+    verbose: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [reportexporter]
