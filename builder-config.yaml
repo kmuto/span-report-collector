@@ -1,0 +1,10 @@
+dist:
+  name: span-report-collector
+  description: OTLP Receiver and Custom Span Report Exporter
+  output_path: ./dist
+
+exporters:
+  - gomod: github.com/kmuto/spanreportexporter v0.0.1 # 自作Exporterのパス
+    path: ./spanreportexporter
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.142.0
