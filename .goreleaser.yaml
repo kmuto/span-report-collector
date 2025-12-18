@@ -13,6 +13,5 @@ builds:
       - amd64
       - arm64
     dir: ./dist
-    main: main.go
     binary: span-report-collector
 dist: releases
