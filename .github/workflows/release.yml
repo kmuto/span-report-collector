@@ -32,8 +32,6 @@ jobs:
       - name: Generate Collector Source
         run: |
           builder --config builder-config.yaml
-          # DEBUG
-          ls -R ./dist
 
       # 3. Run GoReleaser
       - name: Run GoReleaser
