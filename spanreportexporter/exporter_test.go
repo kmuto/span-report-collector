@@ -19,7 +19,7 @@ func TestConsumeTraces_Counting(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	// 2. Exporterのインスタンス化
-	exp := &reportExporter{
+	exp := &spanReportExporter{
 		path:    tmpFile.Name(),
 		verbose: true,
 		logger:  componenttest.NewNopTelemetrySettings().Logger,
@@ -58,7 +58,7 @@ func TestRotateAndWrite_ResetLogic(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tmpFile.Name())
 
-	exp := &reportExporter{
+	exp := &spanReportExporter{
 		path:   tmpFile.Name(),
 		logger: componenttest.NewNopTelemetrySettings().Logger,
 	}

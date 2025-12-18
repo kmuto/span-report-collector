@@ -35,7 +35,7 @@ builder --config builder-config.yaml
 
 ## 設定方法
 
-`config.yaml` を作成し、カスタムエクスポーター `reportexporter` を定義します。
+`config.yaml` を作成し、カスタムエクスポーター `spanreportexporter` を定義します。
 
 ```yaml
 receivers:
@@ -45,7 +45,7 @@ receivers:
       http:
 
 exporters:
-  reportexporter:
+  spanreportexporter:
     path: "./span_report.txt"      # レポートの出力先
     report_interval: "1h"          # 出力間隔 (1h, 1m, 10s等)
     verbose: true                  # true にすると受信ごとにログ出力
@@ -54,7 +54,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [reportexporter]
+      exporters: [spanreportexporter]
 ```
 
 ## 実行方法

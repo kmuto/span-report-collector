@@ -24,7 +24,7 @@ type spanStats struct {
 	monthly atomic.Uint64
 }
 
-type reportExporter struct {
+type spanReportExporter struct {
 	path           string
 	verbose        bool
 	reportInterval time.Duration
@@ -34,7 +34,7 @@ type reportExporter struct {
 	lastExportTime time.Time
 }
 
-func (e *reportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) error {
+func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) error {
 	rss := td.ResourceSpans()
 	for i := 0; i < rss.Len(); i++ {
 		rs := rss.At(i)
@@ -80,7 +80,7 @@ func (e *reportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) erro
 	return nil
 }
 
-func (e *reportExporter) startReporting() {
+func (e *spanReportExporter) startReporting() {
 	go func() {
 		ticker := time.NewTicker(e.reportInterval)
 		defer ticker.Stop()
@@ -107,7 +107,7 @@ func (e *reportExporter) startReporting() {
 	}()
 }
 
-func (e *reportExporter) rotateAndWrite(now time.Time) {
+func (e *spanReportExporter) rotateAndWrite(now time.Time) {
 	f, err := os.OpenFile(e.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		e.logger.Error("Failed to open report file", zap.Error(err))
@@ -147,12 +147,12 @@ func (e *reportExporter) rotateAndWrite(now time.Time) {
 	e.lastExportTime = time.Now()
 }
 
-func (e *reportExporter) Start(_ context.Context, _ component.Host) error {
+func (e *spanReportExporter) Start(_ context.Context, _ component.Host) error {
 	e.startReporting()
 	return nil
 }
 
-func (e *reportExporter) Shutdown(_ context.Context) error {
+func (e *spanReportExporter) Shutdown(_ context.Context) error {
 	close(e.stopCh)
 	e.rotateAndWrite(time.Now())
 	e.logger.Info("SHUTDOWN")

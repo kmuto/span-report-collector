@@ -35,7 +35,7 @@ Once completed, the binary will be generated at `./dist/span-report-collector`.
 
 ## Configuration
 
-Create a `config.yaml` to define the `reportexporter` custom exporter.
+Create a `config.yaml` to define the `spanreportexporter` custom exporter.
 
 ```yaml
 receivers:
@@ -45,7 +45,7 @@ receivers:
       http:
 
 exporters:
-  reportexporter:
+  spanreportexporter:
     path: "./span_report.txt"      # File path for the report
     report_interval: "1h"          # Export interval (e.g., 1h, 1m, 10s)
     verbose: true                  # Set to true for per-receipt logging
@@ -54,7 +54,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [reportexporter]
+      exporters: [spanreportexporter]
 ```
 
 ## Usage

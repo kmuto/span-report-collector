@@ -9,9 +9,9 @@ import (
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 )
 
-const typeStr = "reportexporter"
+const typeStr = "spanreportexporter"
 
-var componentType = component.MustNewType("reportexporter")
+var componentType = component.MustNewType("spanreportexporter")
 
 func NewFactory() exporter.Factory {
 	return exporter.NewFactory(
@@ -41,7 +41,7 @@ func createTracesExporter(ctx context.Context, set exporter.Settings, cfg compon
 	if interval <= 0 {
 		interval = time.Hour
 	}
-	exp := &reportExporter{
+	exp := &spanReportExporter{
 		path:           c.FilePath,
 		verbose:        c.Verbose,
 		reportInterval: interval,

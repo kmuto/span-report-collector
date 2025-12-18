@@ -5,7 +5,7 @@ receivers:
       http:
 
 exporters:
-  reportexporter:
+  spanreportexporter:
     path: "./span_report.txt"
     verbose: true
     report_interval: 1m
@@ -14,4 +14,4 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [reportexporter]
+      exporters: [spanreportexporter]
