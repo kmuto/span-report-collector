@@ -1,0 +1,18 @@
+# .goreleaser.yaml
+version: 2
+project_name: span-report-collector
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # OCBが ./dist に生成したソースコードを指定
+    main: ./dist/main.go
+    binary: span-report-collector
+    # OCBが生成した go.mod を使うようにカレントディレクトリを変更
+    dir: ./dist

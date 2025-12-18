@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      # 1. Install OCB (OpenTelemetry Collector Builder)
+      - name: Install OCB
+        run: go install go.opentelemetry.io/collector/cmd/builder@latest
+
+      # 2. Run OCB to generate main.go and go.mod into ./dist
+      # GoReleaser will use these generated files
+      - name: Generate Collector Source
+        run: builder --config builder-config.yaml
+
+      # 3. Run GoReleaser
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
