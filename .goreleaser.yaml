@@ -8,11 +8,10 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
-    # OCBが ./dist に生成したソースコードを指定
-    main: ./dist/main.go
-    binary: span-report-collector
-    # OCBが生成した go.mod を使うようにカレントディレクトリを変更
     dir: ./dist
+    main: ./main.go
+    binary: span-report-collector
