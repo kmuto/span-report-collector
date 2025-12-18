@@ -1,0 +1,38 @@
+[Unit]
+Description=OpenTelemetry Collector with Custom Span Reporting Exporter
+Documentation=https://github.com/kmuto/span-report-collector
+# Ensure network is available before starting
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Environment variables can be defined here if needed
+# Environment=OTEL_LOG_LEVEL=info
+
+# Path to the binary and configuration file
+ExecStart=/usr/local/bin/span-report-collector --config /etc/span-report-collector/config.yaml
+
+# Restart policy: automatically restart on failure after 5 seconds
+Restart=on-failure
+RestartSec=5s
+
+# Security: Run as a dedicated non-privileged user
+User=nobody
+Group=nogroup
+
+# Resource limits to prevent system exhaustion
+MemoryLimit=512M
+CPUWeight=100
+
+# Logging: Send stdout and stderr to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=span-report-collector
+
+# Capability restrictions for security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+# Start the service automatically during multi-user boot sequence
+WantedBy=multi-user.target
