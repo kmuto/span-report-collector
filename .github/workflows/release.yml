@@ -30,9 +30,10 @@ jobs:
       # 2. Run OCB to generate main.go and go.mod into ./dist
       # GoReleaser will use these generated files
       - name: Generate Collector Source
-        run: builder --config builder-config.yaml
-        # DEBUG
-        ls -R ./dist
+        run: |
+          builder --config builder-config.yaml
+          # DEBUG
+          ls -R ./dist
 
       # 3. Run GoReleaser
       - name: Run GoReleaser
