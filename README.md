@@ -21,7 +21,6 @@ Ensure you have Go 1.24+ and OCB installed.
 
 ```bash
 go install go.opentelemetry.io/collector/cmd/builder@latest
-
 ```
 
 ### 2. Generate Binary
@@ -30,7 +29,6 @@ Run the following command in the directory containing `builder-config.yaml`:
 
 ```bash
 builder --config builder-config.yaml
-
 ```
 
 Once completed, the binary will be generated at `./dist/span-report-collector`.
@@ -57,14 +55,12 @@ service:
     traces:
       receivers: [otlp]
       exporters: [reportexporter]
-
 ```
 
 ## Usage
 
 ```bash
 ./dist/span-report-collector --config config.yaml
-
 ```
 
 ## Report Format
@@ -74,7 +70,6 @@ Data is appended to `span_report.txt` in the following format:
 ```text
 [2025-12-18 08:59:59] env:prod, service:order-api | hourly:1500, daily:34200, monthly:120500
 [2025-12-18 08:59:59] env:dev, service:auth-svc | hourly:120, daily:800, monthly:5200
-
 ```
 
 ### Counters and Reset Logic
