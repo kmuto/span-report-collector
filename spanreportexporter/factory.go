@@ -2,6 +2,7 @@ package spanreportexporter
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
@@ -21,24 +22,31 @@ func NewFactory() exporter.Factory {
 }
 
 type Config struct {
-	FilePath string `mapstructure:"path"`
-	Verbose  bool   `mapstructure:"verbose"`
+	FilePath       string `mapstructure:"path"`
+	Verbose        bool   `mapstructure:"verbose"`
+	ReportInterval string `mapstructure:"report_interval"`
 }
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		FilePath: "./span_report.txt",
-		Verbose:  false,
+		FilePath:       "./span_report.txt",
+		Verbose:        false,
+		ReportInterval: "1h",
 	}
 }
 
 func createTracesExporter(ctx context.Context, set exporter.Settings, cfg component.Config) (exporter.Traces, error) {
 	c := cfg.(*Config)
+	interval, _ := time.ParseDuration(c.ReportInterval)
+	if interval <= 0 {
+		interval = time.Hour
+	}
 	exp := &reportExporter{
-		path:    c.FilePath,
-		verbose: c.Verbose,
-		logger:  set.Logger,
-		stopCh:  make(chan struct{}),
+		path:           c.FilePath,
+		verbose:        c.Verbose,
+		reportInterval: interval,
+		logger:         set.Logger,
+		stopCh:         make(chan struct{}),
 	}
 	return exporterhelper.NewTraces(
 		ctx,

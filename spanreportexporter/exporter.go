@@ -25,11 +25,13 @@ type spanStats struct {
 }
 
 type reportExporter struct {
-	path     string
-	verbose  bool
-	logger   *zap.Logger
-	statsMap sync.Map // map[groupingKey]*spanStats
-	stopCh   chan struct{}
+	path           string
+	verbose        bool
+	reportInterval time.Duration
+	logger         *zap.Logger
+	statsMap       sync.Map // map[groupingKey]*spanStats
+	stopCh         chan struct{}
+	lastExportTime time.Time
 }
 
 func (e *reportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) error {
@@ -80,15 +82,23 @@ func (e *reportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) erro
 
 func (e *reportExporter) startReporting() {
 	go func() {
+		ticker := time.NewTicker(e.reportInterval)
+		defer ticker.Stop()
 		for {
 			now := time.Now()
-			// 次の「0分0秒」までの待ち時間を計算
-			nextHour := now.Truncate(time.Hour).Add(time.Hour)
-			timer := time.NewTimer(time.Until(nextHour))
+			var next time.Time
+			if e.reportInterval >= time.Hour {
+				// 1時間以上の場合は、次の「00分00秒」に同期
+				next = now.Truncate(time.Hour).Add(time.Hour)
+			} else {
+				// 1時間未満（テスト用）の場合は、単純にインターバル分待つ
+				next = now.Add(e.reportInterval)
+			}
 
+			timer := time.NewTimer(time.Until(next))
 			select {
 			case <-timer.C:
-				e.rotateAndWrite(now.Format("2006-01-02 15:00:00"))
+				e.rotateAndWrite(time.Now())
 			case <-e.stopCh:
 				timer.Stop()
 				return
@@ -97,7 +107,7 @@ func (e *reportExporter) startReporting() {
 	}()
 }
 
-func (e *reportExporter) rotateAndWrite(timestamp string) {
+func (e *reportExporter) rotateAndWrite(now time.Time) {
 	f, err := os.OpenFile(e.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		e.logger.Error("Failed to open report file", zap.Error(err))
@@ -105,7 +115,9 @@ func (e *reportExporter) rotateAndWrite(timestamp string) {
 	}
 	defer f.Close()
 
-	now := time.Now()
+	// レポート上の表記を調整
+	// 例: 01月01日 00:00:00 に実行された場合、表示は "12月31日 23:59:59" 側にする
+	displayTime := now.Add(-1 * time.Second).Format("2006-01-02 15:04:05")
 
 	e.statsMap.Range(func(keyAny, valAny any) bool {
 		k := keyAny.(groupingKey)
@@ -113,22 +125,26 @@ func (e *reportExporter) rotateAndWrite(timestamp string) {
 
 		// 現在の値を読み取り
 		h := s.hourly.Swap(0) // hourlyは常にリセット
+		// 日付が変わっていたら Daily をリセット
+		if now.Day() != e.lastExportTime.Day() && !e.lastExportTime.IsZero() {
+			s.daily.Store(0)
+		}
+		// 月が変わっていたら Monthly をリセット
+		if now.Month() != e.lastExportTime.Month() && !e.lastExportTime.IsZero() {
+			s.monthly.Store(0)
+		}
+
 		d := s.daily.Load()
 		m := s.monthly.Load()
 
-		// 日次・月次のリセット判定
-		if now.Hour() == 0 {
-			d = s.daily.Swap(0)
-		}
-		if now.Day() == 1 && now.Hour() == 0 {
-			m = s.monthly.Swap(0)
-		}
-
 		line := fmt.Sprintf("[%s] env:%s, service:%s | hourly:%d, daily:%d, monthly:%d\n",
-			timestamp, k.env, k.service, h, d, m)
+			displayTime, k.env, k.service, h, d, m)
 		f.WriteString(line)
 		return true
 	})
+
+	// エクスポート時間を更新
+	e.lastExportTime = time.Now()
 }
 
 func (e *reportExporter) Start(_ context.Context, _ component.Host) error {
@@ -138,6 +154,7 @@ func (e *reportExporter) Start(_ context.Context, _ component.Host) error {
 
 func (e *reportExporter) Shutdown(_ context.Context) error {
 	close(e.stopCh)
-	e.rotateAndWrite("SHUTDOWN")
+	e.rotateAndWrite(time.Now())
+	e.logger.Info("SHUTDOWN")
 	return nil
 }

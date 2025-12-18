@@ -8,6 +8,7 @@ exporters:
   reportexporter:
     path: "./span_report.txt"
     verbose: true
+    report_interval: 1m
 
 service:
   pipelines:
