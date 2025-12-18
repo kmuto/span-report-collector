@@ -4,7 +4,7 @@ dist:
   output_path: ./dist
 
 exporters:
-  - gomod: github.com/kmuto/spanreportexporter v0.0.1 # 自作Exporterのパス
+  - gomod: github.com/kmuto/span-report-collector/spanreportexporter v0.0.7
     path: ./spanreportexporter
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.142.0

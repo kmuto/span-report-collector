@@ -1,4 +1,4 @@
-module github.com/kmuto/spanreportexporter
+module github.com/kmuto/span-report-collector/spanreportexporter
 
 go 1.24.0
 
