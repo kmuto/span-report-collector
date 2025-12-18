@@ -1,5 +1,7 @@
 # Span Report Collector
 
+[日本語](README-ja.md)
+
 `span-report-collector` is a custom OpenTelemetry Collector that aggregates the number of received spans by `service.name` and `deployment.environment.name`, exporting hourly, daily, and monthly statistics to a file.
 
 ## Key Features

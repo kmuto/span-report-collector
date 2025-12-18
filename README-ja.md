@@ -1,5 +1,7 @@
 # Span Report Collector
 
+[English](README.md)
+
 `span-report-collector` は、受信したトレース（Span）の数を、`service.name` および `deployment.environment.name` ごとに集計し、時間・日・月単位の統計をファイルに出力するカスタム OpenTelemetry Collector です。
 
 ## 主な機能
