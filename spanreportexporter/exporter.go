@@ -19,9 +19,15 @@ type groupingKey struct {
 }
 
 type spanStats struct {
-	hourly  atomic.Uint64
-	daily   atomic.Uint64
-	monthly atomic.Uint64
+	hourly      atomic.Uint64
+	daily       atomic.Uint64
+	monthly     atomic.Uint64
+	httpHourly  atomic.Uint64
+	sqlHourly   atomic.Uint64
+	httpDaily   atomic.Uint64
+	sqlDaily    atomic.Uint64
+	httpMonthly atomic.Uint64
+	sqlMonthly  atomic.Uint64
 }
 
 type spanReportExporter struct {
@@ -64,7 +70,42 @@ func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) 
 		val, _ := e.statsMap.LoadOrStore(key, &spanStats{})
 		stats := val.(*spanStats)
 
-		// カウントアップ
+		ilss := rs.ScopeSpans()
+		for j := 0; j < ilss.Len(); j++ {
+			spans := ilss.At(j).Spans()
+			for k := 0; k < spans.Len(); k++ {
+				span := spans.At(k)
+
+				// Basic total count
+				stats.hourly.Add(1)
+				stats.daily.Add(1)
+				stats.monthly.Add(1)
+
+				// Categorize by Kind and Attributes
+				attrs := span.Attributes()
+
+				// Check for HTTP Request (SERVER kind + http.route attribute)
+				if span.Kind() == ptrace.SpanKindServer {
+					_, hasHttpTarget := attrs.Get("http.target")
+					_, hasHttpRoute := attrs.Get("http.route")
+					if hasHttpTarget || hasHttpRoute {
+						stats.httpHourly.Add(1)
+						stats.httpDaily.Add(1)
+						stats.httpMonthly.Add(1)
+					}
+				}
+
+				// Check for SQL Query (db.statement attribute)
+				_, hasDbStatement := attrs.Get("db.statement")
+				_, hasDbQueryText := attrs.Get("db.query.text")
+				if hasDbStatement || hasDbQueryText {
+					stats.sqlHourly.Add(1)
+					stats.sqlDaily.Add(1)
+					stats.sqlMonthly.Add(1)
+				}
+			}
+		}
+
 		count := uint64(td.SpanCount())
 		if e.verbose {
 			e.logger.Info("Processed spans",
@@ -73,9 +114,6 @@ func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) 
 				zap.Uint64("span_count", count),
 			)
 		}
-		stats.hourly.Add(count)
-		stats.daily.Add(count)
-		stats.monthly.Add(count)
 	}
 	return nil
 }
@@ -108,6 +146,13 @@ func (e *spanReportExporter) startReporting() {
 }
 
 func (e *spanReportExporter) rotateAndWrite(now time.Time) {
+	// 1. Calculate and update stats (Logic part)
+	lines := e.generateReportLines(now)
+	if len(lines) == 0 {
+		return
+	}
+
+	// 2. File I/O (Side effect part)
 	f, err := os.OpenFile(e.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		e.logger.Error("Failed to open report file", zap.Error(err))
@@ -115,36 +160,64 @@ func (e *spanReportExporter) rotateAndWrite(now time.Time) {
 	}
 	defer f.Close()
 
-	// レポート上の表記を調整
-	// 例: 01月01日 00:00:00 に実行された場合、表示は "12月31日 23:59:59" 側にする
+	for _, line := range lines {
+		f.WriteString(line)
+	}
+
+	// Update the last export time
+	e.lastExportTime = now
+}
+
+// generateReportLines updates internal counters and returns formatted strings for the report.
+// This method is now easy to test without creating files.
+func (e *spanReportExporter) generateReportLines(now time.Time) []string {
+	var lines []string
 	displayTime := now.Add(-1 * time.Second).Format("2006-01-02 15:04:05")
+
+	// Pre-calculate boundary flags to avoid checking them inside the loop
+	isNewDay := !e.lastExportTime.IsZero() && now.Day() != e.lastExportTime.Day()
+	isNewMonth := !e.lastExportTime.IsZero() && now.Month() != e.lastExportTime.Month()
 
 	e.statsMap.Range(func(keyAny, valAny any) bool {
 		k := keyAny.(groupingKey)
 		s := valAny.(*spanStats)
 
-		// 現在の値を読み取り
-		h := s.hourly.Swap(0) // hourlyは常にリセット
-		// 日付が変わっていたら Daily をリセット
-		if now.Day() != e.lastExportTime.Day() && !e.lastExportTime.IsZero() {
+		// Reset Hourly counters (always)
+		h := s.hourly.Swap(0)
+		hHTTP := s.httpHourly.Swap(0)
+		hSQL := s.sqlHourly.Swap(0)
+
+		// Conditional reset for Daily/Monthly
+		if isNewDay {
 			s.daily.Store(0)
+			s.httpDaily.Store(0)
+			s.sqlDaily.Store(0)
 		}
-		// 月が変わっていたら Monthly をリセット
-		if now.Month() != e.lastExportTime.Month() && !e.lastExportTime.IsZero() {
+		if isNewMonth {
 			s.monthly.Store(0)
+			s.httpMonthly.Store(0)
+			s.sqlMonthly.Store(0)
 		}
 
-		d := s.daily.Load()
-		m := s.monthly.Load()
+		// Load current values
+		d, m := s.daily.Load(), s.monthly.Load()
+		dHTTP, mHTTP := s.httpDaily.Load(), s.httpMonthly.Load()
+		dSQL, mSQL := s.sqlDaily.Load(), s.sqlMonthly.Load()
 
-		line := fmt.Sprintf("[%s] env:%s, service:%s | hourly:%d, daily:%d, monthly:%d\n",
-			displayTime, k.env, k.service, h, d, m)
-		f.WriteString(line)
+		line := fmt.Sprintf("[%s] env:%s, service:%s | "+
+			"Hourly(Total:%d, HTTP:%d, SQL:%d) | "+
+			"Daily(Total:%d, HTTP:%d, SQL:%d) | "+
+			"Monthly(Total:%d, HTTP:%d, SQL:%d)\n",
+			displayTime, k.env, k.service,
+			h, hHTTP, hSQL,
+			d, dHTTP, dSQL,
+			m, mHTTP, mSQL,
+		)
+		lines = append(lines, line)
 		return true
 	})
 
-	// エクスポート時間を更新
-	e.lastExportTime = time.Now()
+	return lines
 }
 
 func (e *spanReportExporter) Start(_ context.Context, _ component.Host) error {

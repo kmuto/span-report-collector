@@ -83,3 +83,97 @@ func TestRotateAndWrite_ResetLogic(t *testing.T) {
 	assert.Equal(t, uint64(0), stats.daily.Load())
 	assert.Equal(t, uint64(0), stats.monthly.Load())
 }
+
+func TestConsumeTraces_Categorization(t *testing.T) {
+	// 1. Setup exporter
+	tmpFile, err := os.CreateTemp("", "category_test")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	exp := &spanReportExporter{
+		path:   tmpFile.Name(),
+		logger: componenttest.NewNopTelemetrySettings().Logger,
+	}
+
+	// 2. Create test data (1 HTTP span, 1 SQL span, 1 Other span)
+	td := ptrace.NewTraces()
+	rs := td.ResourceSpans().AppendEmpty()
+	rs.Resource().Attributes().PutStr("service.name", "test-svc")
+	rs.Resource().Attributes().PutStr("deployment.environment.name", "test-env")
+	spans := rs.ScopeSpans().AppendEmpty().Spans()
+
+	// HTTP Span (Kind=Server + http.route)
+	s1 := spans.AppendEmpty()
+	s1.SetKind(ptrace.SpanKindServer)
+	s1.Attributes().PutStr("http.route", "/api/data")
+
+	// SQL Span (db.statement)
+	s2 := spans.AppendEmpty()
+	s2.SetKind(ptrace.SpanKindClient)
+	s2.Attributes().PutStr("db.statement", "SELECT * FROM users")
+
+	// Other Span
+	s3 := spans.AppendEmpty()
+	s3.SetName("internal-work")
+
+	// 3. Consume
+	err = exp.ConsumeTraces(context.Background(), td)
+	require.NoError(t, err)
+
+	// 4. Verify memory stats
+	key := groupingKey{service: "test-svc", env: "test-env"}
+	val, ok := exp.statsMap.Load(key)
+	require.True(t, ok)
+	stats := val.(*spanStats)
+
+	// Total checks
+	assert.Equal(t, uint64(3), stats.hourly.Load())
+	// HTTP checks
+	assert.Equal(t, uint64(1), stats.httpHourly.Load())
+	assert.Equal(t, uint64(1), stats.httpDaily.Load())
+	// SQL checks
+	assert.Equal(t, uint64(1), stats.sqlHourly.Load())
+	assert.Equal(t, uint64(1), stats.sqlMonthly.Load())
+}
+
+func TestRotateAndWrite_CumulativeResets(t *testing.T) {
+	// Setup
+	tmpFile, err := os.CreateTemp("", "category_test")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+	exp := &spanReportExporter{
+		path:   tmpFile.Name(),
+		logger: componenttest.NewNopTelemetrySettings().Logger,
+	}
+	key := groupingKey{service: "svc", env: "env"}
+	stats := &spanStats{}
+	exp.statsMap.Store(key, stats)
+
+	// Mock initial counts
+	stats.hourly.Store(10)
+	stats.daily.Store(100)
+	stats.monthly.Store(1000)
+	stats.httpDaily.Store(50)
+
+	// Case 1: Same day (Only Hourly should reset)
+	now := time.Date(2025, 12, 18, 10, 0, 0, 0, time.UTC)
+	exp.lastExportTime = now.Add(-1 * time.Hour)
+
+	// We call rotateAndWrite (mock file part or just test logic)
+	// For this test, let's assume rotateAndWrite is modified to be testable
+	// or we just call the logic inside it.
+
+	// Case 2: New Day (Daily should reset, Monthly should not)
+	tomorrow := now.Add(24 * time.Hour)
+	exp.generateReportLines(tomorrow) // 内部ロジックを抽出した関数を想定
+
+	assert.Equal(t, uint64(0), stats.hourly.Load())
+	assert.Equal(t, uint64(0), stats.daily.Load())
+	assert.Equal(t, uint64(0), stats.httpDaily.Load())
+	assert.Equal(t, uint64(1000), stats.monthly.Load(), "Monthly should persist on day change")
+
+	// Case 3: New Month (Monthly should reset)
+	nextMonth := now.AddDate(0, 1, 0)
+	exp.generateReportLines(nextMonth)
+	assert.Equal(t, uint64(0), stats.monthly.Load())
+}

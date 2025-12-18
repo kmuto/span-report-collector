@@ -68,17 +68,22 @@ service:
 Data is appended to `span_report.txt` in the following format:
 
 ```text
-[2025-12-18 08:59:59] env:prod, service:order-api | hourly:1500, daily:34200, monthly:120500
-[2025-12-18 08:59:59] env:dev, service:auth-svc | hourly:120, daily:800, monthly:5200
+[2025-12-18 08:59:59] env:prod, service:order-api | Hourly(Total:1500, HTTP:1000, SQL:500) | Daily(Total:34200, HTTP:20000, SQL:14200) | Monthly(Total:120500, HTTP:80000, SQL:40500)
+[2025-12-18 08:59:59] env:dev, service:auth-svc | Hourly(Total:120, HTTP:0, SQL:0) | Daily(Total:800, HTTP:0, SQL: 0) | Monthly(Total:5200, hTTP:0, SQL:0)
 ```
+
+### Counter Definitions
+- **Total**: All spans received.
+- **HTTP**: Spans with `Kind=SERVER` and `http.route` or `http.target` attribute.
+- **SQL**: Spans with `db.query.text` or `db.statement` attribute.
 
 ### Counters and Reset Logic
 
 Each value is aggregated and reset according to the following rules:
 
-* **hourly**: The number of spans received since the last report (typically the last hour). It is **reset to 0 after every report**.
-* **daily**: The cumulative span count since 00:00:00 of the current day. It is **reset to 0 at the start of a new day** (during the 00:00:00 report).
-* **monthly**: The cumulative span count since 00:00:00 on the 1st of the current month. It is **reset to 0 at the start of a new month** (during the 00:00:00 report on the 1st).
+* **Hourly**: The number of spans received since the last report (typically the last hour). It is **reset to 0 after every report**.
+* **Daily**: The cumulative span count since 00:00:00 of the current day. It is **reset to 0 at the start of a new day** (during the 00:00:00 report).
+* **Monthly**: The cumulative span count since 00:00:00 on the 1st of the current month. It is **reset to 0 at the start of a new month** (during the 00:00:00 report on the 1st).
 
 > **Note:** Please be aware that daily and monthly cumulative values are stored in memory and will be **reset to 0 if the collector is restarted**.
 

@@ -68,9 +68,14 @@ service:
 `span_report.txt` に以下のような形式で追記されます。
 
 ```text
-[2025-12-18 08:59:59] env:prod, service:order-api | hourly:1500, daily:34200, monthly:120500
-[2025-12-18 08:59:59] env:dev, service:auth-svc | hourly:120, daily:800, monthly:5200
+[2025-12-18 08:59:59] env:prod, service:order-api | Hourly(Total:1500, HTTP:1000, SQL:500) | Daily(Total:34200, HTTP:20000, SQL:14200) | Monthly(Total:120500, HTTP:80000, SQL:40500)
+[2025-12-18 08:59:59] env:dev, service:auth-svc | Hourly(Total:120, HTTP:0, SQL:0) | Daily(Total:800, HTTP:0, SQL: 0) | Monthly(Total:5200, hTTP:0, SQL:0)
 ```
+
+### カウンターの定義
+- **Total**: すべての受信スパン。
+- **HTTP**: `Kind=SERVER` および、`http.route` または `http.target` 属性を持つスパン。
+- **SQL**: `db.query.text` または `db.statement` 属性を持つスパン。
 
 ### 統計値の性質とリセットタイミング
 
