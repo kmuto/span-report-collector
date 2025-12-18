@@ -12,6 +12,8 @@ builds:
     goarch:
       - amd64
       - arm64
-    dir: ./dist
-    main: ./main.go
+    dir: .
+    main: ./dist/main.go
     binary: span-report-collector
+    flags:
+      - -mod=mod
