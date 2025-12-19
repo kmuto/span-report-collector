@@ -13,12 +13,12 @@ import (
 )
 
 func TestConsumeTraces_Counting(t *testing.T) {
-	// 1. テスト用の一時ファイル作成
+	// 1. Create a temporary file for testing
 	tmpFile, err := os.CreateTemp("", "span_report_test.txt")
 	require.NoError(t, err)
 	defer os.Remove(tmpFile.Name())
 
-	// 2. Exporterのインスタンス化
+	// 2. Instantiate the Exporter
 	exp := &spanReportExporter{
 		path:    tmpFile.Name(),
 		verbose: true,
@@ -26,22 +26,22 @@ func TestConsumeTraces_Counting(t *testing.T) {
 		stopCh:  make(chan struct{}),
 	}
 
-	// 3. テストデータの作成
+	// 3. Create test data
 	td := ptrace.NewTraces()
 	rs := td.ResourceSpans().AppendEmpty()
 	rs.Resource().Attributes().PutStr("service.name", "test-service")
 	rs.Resource().Attributes().PutStr("deployment.environment.name", "dev")
 
 	scope := rs.ScopeSpans().AppendEmpty()
-	scope.Spans().AppendEmpty() // 1つめのスパン
-	scope.Spans().AppendEmpty() // 2つめのスパン
+	scope.Spans().AppendEmpty() // First span
+	scope.Spans().AppendEmpty() // Second span
 
-	// 4. 実行
+	// 4. Execution
 	ctx := context.Background()
 	err = exp.ConsumeTraces(ctx, td)
 	assert.NoError(t, err)
 
-	// 5. 検証: statsMapに正しく値が入っているか
+	// 5. Validation: Check if values are correctly stored in statsMap
 	key := groupingKey{service: "test-service", env: "dev"}
 	val, ok := exp.statsMap.Load(key)
 	assert.True(t, ok, "statsMap should have the key")
@@ -53,7 +53,7 @@ func TestConsumeTraces_Counting(t *testing.T) {
 }
 
 func TestRotateAndWrite_ResetLogic(t *testing.T) {
-	// 1. セットアップ
+	// 1. Setup
 	tmpFile, err := os.CreateTemp("", "span_reset_test.txt")
 	require.NoError(t, err)
 	defer os.Remove(tmpFile.Name())
@@ -70,15 +70,15 @@ func TestRotateAndWrite_ResetLogic(t *testing.T) {
 	stats.monthly.Store(1000)
 	exp.statsMap.Store(key, stats)
 
-	// 2. 「月が変わった」状態をシミュレート
+	// 2. Simulate "New Month" state
 	lastExport := time.Date(2025, 12, 31, 23, 0, 0, 0, time.UTC)
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	exp.lastExportTime = lastExport
 
-	// 3. 実行
+	// 3. Execution
 	exp.rotateAndWrite(now)
 
-	// 4. 検証: Hourly, Daily, Monthlyすべてがリセットされているはず
+	// 4. Validation: Hourly, Daily, and Monthly should all be reset
 	assert.Equal(t, uint64(0), stats.hourly.Load())
 	assert.Equal(t, uint64(0), stats.daily.Load())
 	assert.Equal(t, uint64(0), stats.monthly.Load())
@@ -165,7 +165,7 @@ func TestRotateAndWrite_CumulativeResets(t *testing.T) {
 
 	// Case 2: New Day (Daily should reset, Monthly should not)
 	tomorrow := now.Add(24 * time.Hour)
-	exp.generateReportLines(tomorrow) // 内部ロジックを抽出した関数を想定
+	exp.generateReportLines(tomorrow) // Assumes a function where internal logic has been extracted
 
 	assert.Equal(t, uint64(0), stats.hourly.Load())
 	assert.Equal(t, uint64(0), stats.daily.Load())

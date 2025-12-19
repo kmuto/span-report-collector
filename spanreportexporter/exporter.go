@@ -46,7 +46,7 @@ func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) 
 		rs := rss.At(i)
 		attrs := rs.Resource().Attributes()
 
-		// 属性の抽出
+		// Extract attributes
 		sName := "unknown"
 		if s, ok := attrs.Get("service.name"); ok {
 			sName = s.AsString()
@@ -66,7 +66,7 @@ func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) 
 			key.env = "unknown"
 		}
 
-		// 統計オブジェクトの取得または生成
+		// Retrieve or initialize the statistics object
 		val, _ := e.statsMap.LoadOrStore(key, &spanStats{})
 		stats := val.(*spanStats)
 
@@ -126,10 +126,10 @@ func (e *spanReportExporter) startReporting() {
 			now := time.Now()
 			var next time.Time
 			if e.reportInterval >= time.Hour {
-				// 1時間以上の場合は、次の「00分00秒」に同期
+				// For intervals of 1 hour or more, synchronize with the next "00:00" mark
 				next = now.Truncate(time.Hour).Add(time.Hour)
 			} else {
-				// 1時間未満（テスト用）の場合は、単純にインターバル分待つ
+				// For intervals less than 1 hour (e.g., for testing), simply wait for the duration
 				next = now.Add(e.reportInterval)
 			}
 
