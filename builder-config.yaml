@@ -1,6 +1,6 @@
 dist:
   name: span-report-collector
-  description: OTLP Receiver and Custom Span Report Exporter
+  description: custom OpenTelemetry Collector to export hourly, daily, and monthly statistics of spans
   output_path: ./dist
 
 exporters:
