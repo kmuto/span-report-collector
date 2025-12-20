@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
@@ -38,6 +39,7 @@ type spanReportExporter struct {
 	statsMap       sync.Map // map[groupingKey]*spanStats
 	stopCh         chan struct{}
 	lastExportTime time.Time
+	tui            bool
 }
 
 func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) error {
@@ -221,6 +223,14 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 }
 
 func (e *spanReportExporter) Start(_ context.Context, _ component.Host) error {
+	if e.tui {
+		go func() {
+			p := tea.NewProgram(NewTUIModel(e), tea.WithAltScreen())
+			if _, err := p.Run(); err != nil {
+				e.logger.Error("Failed to start TUI: %v", zap.Error(err))
+			}
+		}()
+	}
 	e.startReporting()
 	return nil
 }

@@ -25,6 +25,7 @@ type Config struct {
 	FilePath       string `mapstructure:"path"`
 	Verbose        bool   `mapstructure:"verbose"`
 	ReportInterval string `mapstructure:"report_interval"`
+	TUI            bool   `mapstructure:"tui"`
 }
 
 func createDefaultConfig() component.Config {
@@ -32,6 +33,7 @@ func createDefaultConfig() component.Config {
 		FilePath:       "./span_report.txt",
 		Verbose:        false,
 		ReportInterval: "1h",
+		TUI:            false,
 	}
 }
 
@@ -46,6 +48,7 @@ func createTracesExporter(ctx context.Context, set exporter.Settings, cfg compon
 		verbose:        c.Verbose,
 		reportInterval: interval,
 		logger:         set.Logger,
+		tui:            c.TUI,
 		stopCh:         make(chan struct{}),
 	}
 	return exporterhelper.NewTraces(
