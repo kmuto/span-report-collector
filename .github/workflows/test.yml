@@ -17,10 +17,12 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache: true
+          cache-dependency-path: spanreportexporter/go.sum
 
       - name: Install dependencies
+        working-directory: ./spanreportexporter
         run: go mod download
 
       - name: Run tests
-        run: cd spanreportexporter && go test -v ./...
+        working-directory: ./spanreportexporter
+        run: go test -v ./...
