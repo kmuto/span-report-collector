@@ -1,6 +1,17 @@
-# .goreleaser.yaml
 version: 2
 project_name: span-report-collector
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - README-ja.md
+      - LICENSE
+      - config.yaml
+      - span-report-collector.service
 
 builds:
   - env:

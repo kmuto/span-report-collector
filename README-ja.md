@@ -4,38 +4,26 @@
 
 `span-report-collector` は、受信したトレース（Span）の数を、`service.name` および `deployment.environment.name` ごとに集計し、時間・日・月単位の統計をファイルに出力するカスタム OpenTelemetry Collector です。
 
+集計と同時に、本来のトレースデータを外部のバックエンド（Jaeger, SigNoz, Mackerel 等）へ転送するゲートウェイとしても機能します。
+
 ## 主な機能
 
 * **属性別集計:** サービス名とサービス名前空間（dev/prodなど）の組み合わせごとにカウント。
+* **特定のワークロードの分類:** HTTPリクエストとSQLクエリを自動判別して個別に集計。
 * **カレンダー同期:** 毎時 0 分 0 秒に統計をレポート出力（設定で変更可能）。
 * **累積カウント:** 1時間ごとのリセットに加え、日次・月次の累計を保持。
 * **デバッグモード:** `verbose: true` 設定により、受信時の即時ログ出力が可能。
+* **マルチプラットフォーム対応:** Linux, macOS, Windows 用のバイナリを提供。
 
-## ビルド方法
+## インストール
+https://github.com/kmuto/span-report-collector/releases から、お使いの OS とアーキテクチャに合った最新バージョンのバイナリをダウンロードしてください。
 
-このプロジェクトは [OpenTelemetry Collector Builder (OCB)](https://github.com/open-telemetry/opentelemetry-collector/tree/main/cmd/builder) を使用してビルドします。
-
-### 1. 準備
-
-Go 1.24+ と OCB がインストールされていることを確認してください。
-
-```bash
-go install go.opentelemetry.io/collector/cmd/builder@latest
-```
-
-### 2. バイナリの生成
-
-`builder-config.yaml` があるディレクトリで以下を実行します。
-
-```bash
-builder --config builder-config.yaml
-```
-
-ビルドが完了すると、`./dist/span-report-collector` にバイナリが生成されます。
+- **Linux / macOS**: `.tar.gz` 形式をダウンロードして展開します。
+- **Windows**: `.zip` 形式をダウンロードして展開します。
 
 ## 設定方法
 
-`config.yaml` を作成し、カスタムエクスポーター `spanreportexporter` を定義します。
+展開されたフォルダに以下の `config.yaml` を用意しています。
 
 ```yaml
 receivers:
@@ -48,7 +36,7 @@ exporters:
   spanreportexporter:
     path: "./span_report.txt"      # レポートの出力先
     report_interval: "1h"          # 出力間隔 (1h, 1m, 10s等)
-    verbose: true                  # true にすると受信ごとにログ出力
+    verbose: false                 # true にすると受信ごとにログ出力
 
 service:
   pipelines:
@@ -57,10 +45,41 @@ service:
       exporters: [spanreportexporter]
 ```
 
+### カスタマイズの例
+
+#### ローカルホスト以外からの投稿を受け付ける
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+```
+
+#### 受け取ったものをMackerelにも送る
+```yaml
+exporters:
+  spanreportexporter:
+    ...
+  otlphttp/mackerel:
+    endpoint: https://otlp-vaxila.mackerelio.com
+    compression: gzip
+    headers:
+      Mackerel-Api-Key: ${env:MACKEREL_APIKEY}
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [spanreportexporter, otlphttp/mackerel]
+```
+
 ## 実行方法
 
 ```bash
-./dist/span-report-collector --config config.yaml
+./span-report-collector --config config.yaml
 ```
 
 ## レポート形式
