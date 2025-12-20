@@ -4,38 +4,26 @@
 
 `span-report-collector` is a custom OpenTelemetry Collector that aggregates the number of received spans by `service.name` and `deployment.environment.name`, exporting hourly, daily, and monthly statistics to a file.
 
+In addition to span aggregation, it acts as a gateway that relays telemetry data to external backends like Jaeger, SigNoz, and Mackerel.
+
 ## Key Features
 
 * **Attribute-based Aggregation:** Counts spans based on the combination of Service Name and Environment (e.g., dev/prod).
+* **Workload Classification:** Automatically identifies and separately aggregates HTTP requests and SQL queries.
 * **Calendar Synchronization:** Automatically exports statistics at the top of every hour (00:00:00), which is configurable.
 * **Cumulative Counters:** Tracks hourly counts along with daily and monthly running totals.
 * **Debug Mode:** Enables immediate logging upon span receipt by setting `verbose: true`.
+* **Multi-platform Support:** Pre-compiled binaries are available for Linux, macOS, and Windows.
 
-## Build Instructions
+## Installation
+Download the latest version for your OS and architecture from https://github.com/kmuto/span-report-collector/releases .
 
-This project is built using the [OpenTelemetry Collector Builder (OCB)](https://github.com/open-telemetry/opentelemetry-collector/tree/main/cmd/builder).
-
-### 1. Prerequisites
-
-Ensure you have Go 1.24+ and OCB installed.
-
-```bash
-go install go.opentelemetry.io/collector/cmd/builder@latest
-```
-
-### 2. Generate Binary
-
-Run the following command in the directory containing `builder-config.yaml`:
-
-```bash
-builder --config builder-config.yaml
-```
-
-Once completed, the binary will be generated at `./dist/span-report-collector`.
+- **Linux / macOS**: Download and extract the `.tar.gz` archive.
+- **Windows**: Download and extract the `.zip` archive.
 
 ## Configuration
 
-Create a `config.yaml` to define the `spanreportexporter` custom exporter.
+A sample `config.yaml` is provided in the extracted folder.
 
 ```yaml
 receivers:
@@ -48,7 +36,7 @@ exporters:
   spanreportexporter:
     path: "./span_report.txt"      # File path for the report
     report_interval: "1h"          # Export interval (e.g., 1h, 1m, 10s)
-    verbose: true                  # Set to true for per-receipt logging
+    verbose: false                 # Set to true for per-receipt logging
 
 service:
   pipelines:
@@ -57,10 +45,41 @@ service:
       exporters: [spanreportexporter]
 ```
 
+### Examples
+
+#### Allowing requests from non-localhost addresses
+```
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+```
+
+#### Forwarding received spans to Mackerel
+```yaml
+exporters:
+  spanreportexporter:
+    ...
+  otlphttp/mackerel:
+    endpoint: https://otlp-vaxila.mackerelio.com
+    compression: gzip
+    headers:
+      Mackerel-Api-Key: ${env:MACKEREL_APIKEY}
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [spanreportexporter, otlphttp/mackerel]
+```
+
 ## Usage
 
 ```bash
-./dist/span-report-collector --config config.yaml
+./span-report-collector --config config.yaml
 ```
 
 ## Report Format

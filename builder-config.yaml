@@ -6,5 +6,7 @@ dist:
 exporters:
   - gomod: github.com/kmuto/span-report-collector/spanreportexporter v0.0.7
     path: ./spanreportexporter
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.142.0
+
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.142.0
