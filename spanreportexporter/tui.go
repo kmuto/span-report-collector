@@ -3,11 +3,11 @@ package spanreportexporter
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 // 1秒ごとに画面を更新するためのメッセージ
@@ -20,39 +20,16 @@ func tick() tea.Cmd {
 }
 
 type model struct {
-	exporter *spanReportExporter
-	table    table.Model
+	exporter  *spanReportExporter
+	table     table.Model
+	startTime time.Time
 }
 
 func NewTUIModel(e *spanReportExporter) model {
-	columns := []table.Column{
-		{Title: "Service", Width: 12},
-		{Title: "Env", Width: 7},
-		{Title: "Hourly (T/H/S)", Width: 18},
-		{Title: "Daily (T/H/S)", Width: 18},
-		{Title: "Monthly (T/H/S)", Width: 18},
+	return model{
+		exporter:  e,
+		startTime: time.Now(),
 	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithFocused(true),
-		table.WithHeight(10),
-	)
-
-	// スタイルの設定
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-	t.SetStyles(s)
-
-	return model{exporter: e, table: t}
 }
 
 func (m model) Init() tea.Cmd {
@@ -120,15 +97,38 @@ func (m model) generateRows() []table.Row {
 }
 
 func (m model) View() string {
-	baseStyle := lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		Padding(1, 2)
+	var b strings.Builder
 
-	return baseStyle.Render(
-		fmt.Sprintf("Span Report Monitor | %s\n\n%s\n\nPress 'q' to quit",
-			time.Now().Format("15:04:05"),
-			m.table.View(),
-		),
-	)
+	// 1. ヘッダー情報の表示
+	uptime := time.Since(m.startTime).Round(time.Second)
+	b.WriteString(" [Span Report Monitor]\n")
+	b.WriteString(fmt.Sprintf(" Current Time: %s | Uptime: %s\n",
+		time.Now().Format("15:04:05"), uptime))
+	b.WriteString(" Legend: (T:Total / H:HTTP / S:SQL)\n\n")
+
+	header := fmt.Sprintf("%-12s %-7s %-18s %-18s %-18s\n", "SERVICE", "ENV", "HOURLY(T/H/S)", "DAILY(T/H/S)", "MONTHLY(T/H/S)")
+	b.WriteString(header)
+	b.WriteString(strings.Repeat("-", len(header)) + "\n")
+
+	// データの描画
+	rows := m.generateRows()
+	for _, row := range rows {
+		// row は []string {service, env, hourly, daily, monthly}
+		line := fmt.Sprintf("%-12s %-7s %-18s %-18s %-18s\n",
+			truncate(row[0], 12),
+			truncate(row[1], 7),
+			row[2], row[3], row[4])
+		b.WriteString(line)
+	}
+
+	b.WriteString("\nPress 'q' to quit")
+	return b.String()
+}
+
+// 幅を超えた場合に切り詰める補助関数
+func truncate(s string, w int) string {
+	if len(s) > w {
+		return s[:w-1] + "…"
+	}
+	return s
 }
