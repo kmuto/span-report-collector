@@ -24,14 +24,14 @@ jobs:
           cache: true
 
       # 1. Install OCB (OpenTelemetry Collector Builder)
-      - name: Install OCB
-        run: go install go.opentelemetry.io/collector/cmd/builder@latest
+      #- name: Install OCB
+      #  run: go install go.opentelemetry.io/collector/cmd/builder@latest
 
       # 2. Run OCB to generate main.go and go.mod into ./dist
       # GoReleaser will use these generated files
-      - name: Generate Collector Source
-        run: |
-          builder --config builder-config.yaml
+      #- name: Generate Collector Source
+      #  run: |
+      #    builder --config builder-config.yaml
 
       # 3. Run GoReleaser
       - name: Run GoReleaser
