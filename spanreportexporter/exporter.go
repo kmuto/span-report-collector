@@ -206,11 +206,11 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 		dHTTP, mHTTP := s.httpDaily.Load(), s.httpMonthly.Load()
 		dSQL, mSQL := s.sqlDaily.Load(), s.sqlMonthly.Load()
 
-		line := fmt.Sprintf("[%s] env:%s, service:%s | "+
+		line := fmt.Sprintf("[%s] service:%s, env:%s | "+
 			"Hourly(Total:%d, HTTP:%d, SQL:%d) | "+
 			"Daily(Total:%d, HTTP:%d, SQL:%d) | "+
 			"Monthly(Total:%d, HTTP:%d, SQL:%d)\n",
-			displayTime, k.env, k.service,
+			displayTime, k.service, k.env,
 			h, hHTTP, hSQL,
 			d, dHTTP, dSQL,
 			m, mHTTP, mSQL,

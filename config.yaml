@@ -8,6 +8,7 @@ exporters:
   spanreportexporter:
     path: "./span_report.txt"
     report_interval: 1h
+    tui: false
     verbose: false
 
 service:
