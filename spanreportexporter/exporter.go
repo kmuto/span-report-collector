@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
@@ -38,6 +39,7 @@ type spanReportExporter struct {
 	statsMap       sync.Map // map[groupingKey]*spanStats
 	stopCh         chan struct{}
 	lastExportTime time.Time
+	tui            bool
 }
 
 func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) error {
@@ -204,11 +206,11 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 		dHTTP, mHTTP := s.httpDaily.Load(), s.httpMonthly.Load()
 		dSQL, mSQL := s.sqlDaily.Load(), s.sqlMonthly.Load()
 
-		line := fmt.Sprintf("[%s] env:%s, service:%s | "+
+		line := fmt.Sprintf("[%s] service:%s, env:%s | "+
 			"Hourly(Total:%d, HTTP:%d, SQL:%d) | "+
 			"Daily(Total:%d, HTTP:%d, SQL:%d) | "+
 			"Monthly(Total:%d, HTTP:%d, SQL:%d)\n",
-			displayTime, k.env, k.service,
+			displayTime, k.service, k.env,
 			h, hHTTP, hSQL,
 			d, dHTTP, dSQL,
 			m, mHTTP, mSQL,
@@ -221,6 +223,14 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 }
 
 func (e *spanReportExporter) Start(_ context.Context, _ component.Host) error {
+	if e.tui {
+		go func() {
+			p := tea.NewProgram(NewTUIModel(e), tea.WithAltScreen())
+			if _, err := p.Run(); err != nil {
+				e.logger.Error("Failed to start TUI: %v", zap.Error(err))
+			}
+		}()
+	}
 	e.startReporting()
 	return nil
 }

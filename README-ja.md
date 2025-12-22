@@ -36,6 +36,7 @@ exporters:
   spanreportexporter:
     path: "./span_report.txt"      # レポートの出力先
     report_interval: "1h"          # 出力間隔 (1h, 1m, 10s等)
+    tui: false                     # true にすると統計を TUI で表示
     verbose: false                 # true にすると受信ごとにログ出力
 
 service:
@@ -87,8 +88,8 @@ service:
 `span_report.txt` に以下のような形式で追記されます。
 
 ```text
-[2025-12-18 08:59:59] env:prod, service:order-api | Hourly(Total:1500, HTTP:1000, SQL:500) | Daily(Total:34200, HTTP:20000, SQL:14200) | Monthly(Total:120500, HTTP:80000, SQL:40500)
-[2025-12-18 08:59:59] env:dev, service:auth-svc | Hourly(Total:120, HTTP:0, SQL:0) | Daily(Total:800, HTTP:0, SQL: 0) | Monthly(Total:5200, hTTP:0, SQL:0)
+[2025-12-18 08:59:59] service:order-api, env:prod | Hourly(Total:1500, HTTP:1000, SQL:500) | Daily(Total:34200, HTTP:20000, SQL:14200) | Monthly(Total:120500, HTTP:80000, SQL:40500)
+[2025-12-18 08:59:59] service:auth-svc, env:dev | Hourly(Total:120, HTTP:0, SQL:0) | Daily(Total:800, HTTP:0, SQL: 0) | Monthly(Total:5200, hTTP:0, SQL:0)
 ```
 
 ### カウンターの定義

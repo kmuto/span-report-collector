@@ -36,6 +36,7 @@ exporters:
   spanreportexporter:
     path: "./span_report.txt"      # File path for the report
     report_interval: "1h"          # Export interval (e.g., 1h, 1m, 10s)
+    tui: false                     # Set to true for viewing statistics on TUI
     verbose: false                 # Set to true for per-receipt logging
 
 service:
@@ -87,8 +88,8 @@ service:
 Data is appended to `span_report.txt` in the following format:
 
 ```text
-[2025-12-18 08:59:59] env:prod, service:order-api | Hourly(Total:1500, HTTP:1000, SQL:500) | Daily(Total:34200, HTTP:20000, SQL:14200) | Monthly(Total:120500, HTTP:80000, SQL:40500)
-[2025-12-18 08:59:59] env:dev, service:auth-svc | Hourly(Total:120, HTTP:0, SQL:0) | Daily(Total:800, HTTP:0, SQL: 0) | Monthly(Total:5200, hTTP:0, SQL:0)
+[2025-12-18 08:59:59] service:order-api, env:prod | Hourly(Total:1500, HTTP:1000, SQL:500) | Daily(Total:34200, HTTP:20000, SQL:14200) | Monthly(Total:120500, HTTP:80000, SQL:40500)
+[2025-12-18 08:59:59] service:auth-svc, env:dev | Hourly(Total:120, HTTP:0, SQL:0) | Daily(Total:800, HTTP:0, SQL: 0) | Monthly(Total:5200, hTTP:0, SQL:0)
 ```
 
 ### Counter Definitions
