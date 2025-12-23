@@ -5,7 +5,7 @@ module go.opentelemetry.io/collector/cmd/builder
 go 1.24.0
 
 require (
-	github.com/kmuto/span-report-collector/spanreportexporter v0.0.7
+	github.com/kmuto/span-report-collector/spanreportexporter v0.0.12
 	go.opentelemetry.io/collector/component v1.48.0
 	go.opentelemetry.io/collector/confmap v1.48.0
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.48.0
