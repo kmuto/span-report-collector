@@ -73,6 +73,10 @@ func main() {
 		rawYaml := string(defaultConfigFile)
 
 		// 2. Prepare replacement data
+		loglevel := "error"
+		if getEnv("SPAN_REPORT_VERBOSE", "false") == "true" {
+			loglevel = "info"
+		}
 		replacer := strings.NewReplacer(
 			"{{OTLP_ENDPOINT_GRPC}}", getEnv("SPAN_REPORT_OTLP_ENDPOINT_GRPC", "localhost:4317"),
 			"{{OTLP_ENDPOINT_HTTP}}", getEnv("SPAN_REPORT_OTLP_ENDPOINT_HTTP", "localhost:4318"),
@@ -80,6 +84,7 @@ func main() {
 			"{{REPORT_PATH}}", getEnv("SPAN_REPORT_PATH", "./span_report.txt"),
 			"{{REPORT_INTERVAL}}", getEnv("SPAN_REPORT_INTERVAL", "1h"),
 			"{{VERBOSE_LOGGING}}", getEnv("SPAN_REPORT_VERBOSE", "false"),
+			"{{LOG_LEVEL}}", loglevel,
 		)
 
 		// 3. Perform all replacements
