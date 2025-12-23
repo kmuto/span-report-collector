@@ -10,7 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// 1秒ごとに画面を更新するためのメッセージ
+// Message to refresh the screen every second
 type tickMsg time.Time
 
 func tick() tea.Cmd {
@@ -99,7 +99,7 @@ func (m model) generateRows() []table.Row {
 func (m model) View() string {
 	var b strings.Builder
 
-	// 1. ヘッダー情報の表示
+	// 1. Display header information
 	uptime := time.Since(m.startTime).Round(time.Second)
 	b.WriteString("[Span Report Monitor]\n")
 	b.WriteString(fmt.Sprintf("Current Time: %s | Uptime: %s\n",
@@ -110,10 +110,10 @@ func (m model) View() string {
 	b.WriteString(header)
 	b.WriteString(strings.Repeat("-", len(header)) + "\n")
 
-	// データの描画
+	// Render data
 	rows := m.generateRows()
 	for _, row := range rows {
-		// row は []string {service, env, hourly, daily, monthly}
+		// row is []string {service, env, hourly, daily, monthly}
 		line := fmt.Sprintf("%-12s %-7s %-18s %-18s %-18s\n",
 			truncate(row[0], 12),
 			truncate(row[1], 7),
@@ -125,7 +125,7 @@ func (m model) View() string {
 	return b.String()
 }
 
-// 幅を超えた場合に切り詰める補助関数
+// Helper function to truncate a string if it exceeds the given width
 func truncate(s string, w int) string {
 	if len(s) > w {
 		return s[:w-1] + "…"

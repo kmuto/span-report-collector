@@ -32,6 +32,17 @@ Download the latest binary for your OS and architecture from the [Releases](http
 ./span-report-collector
 ```
 
+## TUI Controls
+
+![](./tui.png)
+
+On TUI mode, you can use the following keys:
+
+* `q` or `Ctrl+C`: Quit the application.
+* The screen displays the following information:
+  * **Uptime**: Elapsed time since startup.
+  * **Hourly / Daily / Monthly**: Cumulative counts (Total / HTTP / SQL) for each period.
+
 ## Report Format
 
 By default, statistics are appended to `span_report.txt` in the following format:
@@ -65,20 +76,18 @@ You can customize the behavior using the following environment variables:
 
 | Environment Variable | Description | Default Value |
 | --- | --- | --- |
-| `SPAN_REPORT_TUI` | Enable TUI mode (`true` / `false`) | `false` |
+| `SPAN_REPORT_TUI` | Enable TUI mode (`true` / `false`) | `true` |
 | `SPAN_REPORT_VERBOSE` | Enable verbose logging (Recommended when TUI is disabled) | `false` |
 | `SPAN_REPORT_PATH` | File path for the statistical report | `./span_report.txt` |
 | `SPAN_REPORT_INTERVAL` | Interval for file output (e.g., `1h`, `30m`) | `1h` |
 | `SPAN_REPORT_OTLP_ENDPOINT_GRPC` | Listen address for gRPC receiver | `localhost:4317` |
 | `SPAN_REPORT_OTLP_ENDPOINT_HTTP` | Listen address for HTTP receiver | `localhost:4318` |
 
-#### Example: Launch in TUI mode and expose the endpoint
+#### Example: Launch in non-TUI mode and expose the endpoint
 
 ```sh
-SPAN_REPORT_TUI=true SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
+SPAN_REPORT_TUI=false SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
 ```
-
-![](./tui.png)
 
 ## Using a Custom Configuration File
 
@@ -105,7 +114,7 @@ exporters:
   spanreportexporter:
     path: "./span_report.txt"
     report_interval: "1h"
-    tui: false
+    tui: true
     verbose: false
   otlphttp/mackerel:
     endpoint: https://otlp-vaxila.mackerelio.com
@@ -122,15 +131,6 @@ service:
       receivers: [otlp]
       exporters: [spanreportexporter, otlphttp/mackerel]
 ```
-
-## TUI Controls
-
-When TUI mode is enabled, you can use the following keys:
-
-* `q` or `Ctrl+C`: Quit the application.
-* The screen displays the following information:
-  * **Uptime**: Elapsed time since startup.
-  * **Hourly / Daily / Monthly**: Cumulative counts (Total / HTTP / SQL) for each period.
 
 ## License
 
