@@ -127,8 +127,8 @@ When TUI mode is enabled, you can use the following keys:
 
 * `q` or `Ctrl+C`: Quit the application.
 * The screen displays the following information:
-* **Uptime**: Elapsed time since startup.
-* **Hourly / Daily / Monthly**: Cumulative counts (Total / HTTP / SQL) for each period.
+  * **Uptime**: Elapsed time since startup.
+  * **Hourly / Daily / Monthly**: Cumulative counts (Total / HTTP / SQL) for each period.
 
 ## License
 
