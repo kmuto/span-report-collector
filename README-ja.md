@@ -31,6 +31,17 @@ https://github.com/kmuto/span-report-collector/releases から、お使いの OS
 ./span-report-collector
 ```
 
+## TUI の操作方法
+
+![](./tui.png)
+
+TUI モードでは、以下のキー操作が可能です。
+
+* `q` または `Ctrl+C`: アプリケーションを終了します。
+* 画面には以下の情報が表示されます：
+  * **Uptime**: 起動からの経過時間
+  * **Hourly / Daily / Monthly**: 各期間の累計（Total / HTTP / SQL）
+
 ## レポート形式
 
 デフォルトでは `span_report.txt` に以下のような形式で追記されます。
@@ -62,20 +73,18 @@ https://github.com/kmuto/span-report-collector/releases から、お使いの OS
 
 | 環境変数 | 説明 | デフォルト値 |
 | --- | --- | --- |
-| `SPAN_REPORT_TUI` | TUI モードを有効にする (`true` / `false`) | `false` |
+| `SPAN_REPORT_TUI` | TUI モードを有効にする (`true` / `false`) | `true` |
 | `SPAN_REPORT_VERBOSE` | 詳細ログを出力する（TUI 無効時を推奨）| `false` |
 | `SPAN_REPORT_PATH` | 統計レポートファイルの出力先パス | `./span_report.txt` |
 | `SPAN_REPORT_INTERVAL` | ファイル出力の更新間隔（例: `1h`, `30m`） | `1h` |
 | `SPAN_REPORT_OTLP_ENDPOINT_GRPC` | gRPC レシーバーの待機アドレス | `localhost:4317` |
 | `SPAN_REPORT_OTLP_ENDPOINT_HTTP` | HTTP レシーバーの待機アドレス | `localhost:4318` |
 
-#### TUI モードで起動し、ポートを外部へ公開する場合
+#### 非 TUI モードで起動し、ポートを外部へ公開する場合
 
 ```sh
-SPAN_REPORT_TUI=true SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
+SPAN_REPORT_TUI=false SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
 ```
-
-![](./tui.png)
 
 ## 独自の構成ファイルを使用する
 
@@ -119,15 +128,6 @@ service:
       receivers: [otlp]
       exporters: [spanreportexporter, otlphttp/mackerel]
 ```
-
-## TUI の操作方法
-
-TUI モードが有効な場合、以下のキー操作が可能です。
-
-* `q` または `Ctrl+C`: アプリケーションを終了します。
-* 画面には以下の情報が表示されます：
-  * **Uptime**: 起動からの経過時間
-  * **Hourly / Daily / Monthly**: 各期間の累計（Total / HTTP / SQL）
 
 ## ライセンス
 ```

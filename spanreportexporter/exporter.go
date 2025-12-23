@@ -56,6 +56,8 @@ func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) 
 		eName := "unknown"
 		if e, ok := attrs.Get("deployment.environment.name"); ok {
 			eName = e.AsString()
+		} else if e, ok := attrs.Get("deployment.environment"); ok {
+			eName = e.AsString()
 		}
 		key := groupingKey{
 			service: sName,
@@ -164,6 +166,9 @@ func (e *spanReportExporter) rotateAndWrite(now time.Time) {
 
 	for _, line := range lines {
 		f.WriteString(line)
+		if e.tui == false {
+			fmt.Print(line)
+		}
 	}
 
 	// Update the last export time
@@ -229,6 +234,8 @@ func (e *spanReportExporter) Start(_ context.Context, _ component.Host) error {
 			if _, err := p.Run(); err != nil {
 				e.logger.Error("Failed to start TUI: %v", zap.Error(err))
 			}
+			e.rotateAndWrite(time.Now())
+			os.Exit(0)
 		}()
 	}
 	e.startReporting()
