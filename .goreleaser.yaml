@@ -13,6 +13,8 @@ archives:
       - config.yaml
       - span-report-collector.service
       - tui.png
+      - diagram-ja.png
+      - diagram-en.png
 
 builds:
   - env:

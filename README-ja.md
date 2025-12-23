@@ -4,6 +4,8 @@
 
 `span-report-collector` は、受信したトレース（Span）の数を、`service.name` および `deployment.environment.name` ごとに集計し、時間・日・月単位の統計をファイルに出力します。
 
+![](./diagram-ja.png)
+
 Collector 機能も持ち合わせているので、集計と同時に、本来のトレースデータを外部のバックエンド（Jaeger, SigNoz, Mackerel 等）へ転送するゲートウェイとしても機能します。
 
 ## 主な機能
