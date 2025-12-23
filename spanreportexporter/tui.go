@@ -158,35 +158,6 @@ func (m model) View() string {
 	return b.String()
 }
 
-func (m model) View_old() string {
-	var b strings.Builder
-
-	// 1. Display header information
-	uptime := time.Since(m.startTime).Round(time.Second)
-	b.WriteString("[Span Report Monitor]\n")
-	b.WriteString(fmt.Sprintf("Current Time: %s | Uptime: %s\n",
-		time.Now().Format("15:04:05"), uptime))
-	b.WriteString("Legend: (T:Total / H:HTTP / S:SQL)\n\n")
-
-	header := fmt.Sprintf("%-12s %-7s %-18s %-18s %-18s\n", "SERVICE", "ENV", "HOURLY(T/H/S)", "DAILY(T/H/S)", "MONTHLY(T/H/S)")
-	b.WriteString(header)
-	b.WriteString(strings.Repeat("-", len(header)) + "\n")
-
-	// Render data
-	rows := m.generateRows()
-	for _, row := range rows {
-		// row is []string {service, env, hourly, daily, monthly}
-		line := fmt.Sprintf("%-12s %-7s %-18s %-18s %-18s\n",
-			truncate(row[0], 12),
-			truncate(row[1], 7),
-			row[2], row[3], row[4])
-		b.WriteString(line)
-	}
-
-	b.WriteString("\nPress 'q' to quit")
-	return b.String()
-}
-
 // Helper function to truncate a string if it exceeds the given width
 func truncate(s string, w int) string {
 	if len(s) > w {
