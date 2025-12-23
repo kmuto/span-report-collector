@@ -1,4 +1,4 @@
-# Span Report Collector ("Supan-su wo Kazoeru-kun")
+# Span Report Collector ("Span-su wo Kazoeru-kun")
 
 [日本語](README-ja.md)
 
