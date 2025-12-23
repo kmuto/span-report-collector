@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -40,6 +41,11 @@ type spanReportExporter struct {
 	stopCh         chan struct{}
 	lastExportTime time.Time
 	tui            bool
+}
+
+type statsEntry struct {
+	key   groupingKey
+	stats *spanStats
 }
 
 func (e *spanReportExporter) ConsumeTraces(_ context.Context, td ptrace.Traces) error {
@@ -182,6 +188,7 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 	displayTime := now.Add(-1 * time.Second).Format("2006-01-02 15:04:05")
 
 	// Pre-calculate boundary flags to avoid checking them inside the loop
+	isNewHour := !e.lastExportTime.IsZero() && now.Hour() != e.lastExportTime.Hour()
 	isNewDay := !e.lastExportTime.IsZero() && now.Day() != e.lastExportTime.Day()
 	isNewMonth := !e.lastExportTime.IsZero() && now.Month() != e.lastExportTime.Month()
 
@@ -189,12 +196,12 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 		k := keyAny.(groupingKey)
 		s := valAny.(*spanStats)
 
-		// Reset Hourly counters (always)
-		h := s.hourly.Swap(0)
-		hHTTP := s.httpHourly.Swap(0)
-		hSQL := s.sqlHourly.Swap(0)
-
-		// Conditional reset for Daily/Monthly
+		// Conditional reset for Hourly/Daily/Monthly
+		if isNewHour {
+			s.hourly.Store(0)
+			s.httpHourly.Store(0)
+			s.sqlHourly.Store(0)
+		}
 		if isNewDay {
 			s.daily.Store(0)
 			s.httpDaily.Store(0)
@@ -207,9 +214,9 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 		}
 
 		// Load current values
-		d, m := s.daily.Load(), s.monthly.Load()
-		dHTTP, mHTTP := s.httpDaily.Load(), s.httpMonthly.Load()
-		dSQL, mSQL := s.sqlDaily.Load(), s.sqlMonthly.Load()
+		h, d, m := s.hourly.Load(), s.daily.Load(), s.monthly.Load()
+		hHTTP, dHTTP, mHTTP := s.httpHourly.Load(), s.httpDaily.Load(), s.httpMonthly.Load()
+		hSQL, dSQL, mSQL := s.sqlHourly.Load(), s.sqlDaily.Load(), s.sqlMonthly.Load()
 
 		line := fmt.Sprintf("[%s] service:%s, env:%s | "+
 			"Hourly(Total:%d, HTTP:%d, SQL:%d) | "+
@@ -225,6 +232,28 @@ func (e *spanReportExporter) generateReportLines(now time.Time) []string {
 	})
 
 	return lines
+}
+
+func (e *spanReportExporter) getSortedEntries() []statsEntry {
+	var entries []statsEntry
+
+	e.statsMap.Range(func(keyAny, valAny any) bool {
+		entries = append(entries, statsEntry{
+			key:   keyAny.(groupingKey),
+			stats: valAny.(*spanStats),
+		})
+		return true
+	})
+
+	// Sort by service name (ascending) -> environment name (ascending)
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].key.service != entries[j].key.service {
+			return entries[i].key.service < entries[j].key.service
+		}
+		return entries[i].key.env < entries[j].key.env
+	})
+
+	return entries
 }
 
 func (e *spanReportExporter) Start(_ context.Context, _ component.Host) error {

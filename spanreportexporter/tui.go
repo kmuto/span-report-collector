@@ -3,6 +3,7 @@ package spanreportexporter
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -96,7 +97,68 @@ func (m model) generateRows() []table.Row {
 	return rows
 }
 
+func humanize(v int64) string {
+	if v < 10000 {
+		return strconv.FormatInt(v, 10)
+	}
+
+	suffixes := []string{"k", "M", "G", "T", "P", "E"}
+	f := float64(v)
+	unit := 1000.0
+
+	for _, suffix := range suffixes {
+		f /= unit
+		if f < unit {
+			// Up to one decimal place. e.g., 1.0k, 999.9k
+			return fmt.Sprintf("%.1f%s", f, suffix)
+		}
+	}
+	return fmt.Sprintf("%.1fE", f)
+}
+
 func (m model) View() string {
+	var b strings.Builder
+
+	// Header information
+	uptime := time.Since(m.startTime).Round(time.Second)
+	b.WriteString(fmt.Sprintf(" [Span Report Monitor]  Time: %s | Uptime: %s\n",
+		time.Now().Format("15:04:05"), uptime))
+	b.WriteString(" Legend: T=Total, H=HTTP, S=SQL\n\n")
+
+	// Header row (with clear separators)
+	// Total width is about 85 characters, fitting within a typical terminal width of 80-100 characters.
+	header := fmt.Sprintf("%-12s %-7s | %-17s | %-17s | %-18s\n",
+		"SERVICE", "ENV", "  HOURLY (T/H/S)", "  DAILY (T/H/S)", "  MONTHLY (T/H/S)")
+	b.WriteString(header)
+	b.WriteString(strings.Repeat("-", 12) + "-" + strings.Repeat("-", 8) + "+" +
+		strings.Repeat("-", 19) + "+" + strings.Repeat("-", 19) + "+" +
+		strings.Repeat("-", 20) + "\n")
+
+	// Render data
+	entries := m.exporter.getSortedEntries() // Sorted entries
+	for _, e := range entries {
+		s := e.stats
+
+		// Function to format a group of three numbers for one period
+		fmtGroup := func(t, h, s uint64) string {
+			return fmt.Sprintf("%5s %5s %5s", humanize(int64(t)), humanize(int64(h)), humanize(int64(s)))
+		}
+
+		line := fmt.Sprintf("%-12s %-7s | %s | %s | %s\n",
+			truncate(e.key.service, 12),
+			truncate(e.key.env, 7),
+			fmtGroup(s.hourly.Load(), s.httpHourly.Load(), s.sqlHourly.Load()),
+			fmtGroup(s.daily.Load(), s.httpDaily.Load(), s.sqlDaily.Load()),
+			fmtGroup(s.monthly.Load(), s.httpMonthly.Load(), s.sqlMonthly.Load()),
+		)
+		b.WriteString(line)
+	}
+
+	b.WriteString("\n (Press 'q' or 'Ctrl+C' to exit)")
+	return b.String()
+}
+
+func (m model) View_old() string {
 	var b strings.Builder
 
 	// 1. Display header information

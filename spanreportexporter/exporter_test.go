@@ -177,3 +177,33 @@ func TestRotateAndWrite_CumulativeResets(t *testing.T) {
 	exp.generateReportLines(nextMonth)
 	assert.Equal(t, uint64(0), stats.monthly.Load())
 }
+
+func TestHumanize(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    int64
+		expected string
+	}{
+		{"Small number", 0, "0"},
+		{"Below threshold", 999, "999"},
+		{"Exactly threshold minus one", 9999, "9999"},
+		{"Exactly threshold (starts humanize)", 10000, "10.0k"},
+		{"Ten thousand plus", 10500, "10.5k"},
+		{"Near million", 999900, "999.9k"},
+		{"Million", 1000000, "1.0M"},
+		{"Million plus", 1250000, "1.2M"},
+		{"Giga", 1000000000, "1.0G"},
+		{"Tera", 1000000000000, "1.0T"},
+		{"Peta", 1000000000000000, "1.0P"},
+		{"Exa", 1000000000000000000, "1.0E"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := humanize(tt.input)
+			if actual != tt.expected {
+				t.Errorf("humanize(%d) = %s; want %s", tt.input, actual, tt.expected)
+			}
+		})
+	}
+}
