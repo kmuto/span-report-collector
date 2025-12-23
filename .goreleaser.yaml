@@ -12,6 +12,7 @@ archives:
       - LICENSE
       - config.yaml
       - span-report-collector.service
+      - tui.png
 
 builds:
   - env:
