@@ -101,10 +101,10 @@ func (m model) View() string {
 
 	// 1. ヘッダー情報の表示
 	uptime := time.Since(m.startTime).Round(time.Second)
-	b.WriteString(" [Span Report Monitor]\n")
-	b.WriteString(fmt.Sprintf(" Current Time: %s | Uptime: %s\n",
+	b.WriteString("[Span Report Monitor]\n")
+	b.WriteString(fmt.Sprintf("Current Time: %s | Uptime: %s\n",
 		time.Now().Format("15:04:05"), uptime))
-	b.WriteString(" Legend: (T:Total / H:HTTP / S:SQL)\n\n")
+	b.WriteString("Legend: (T:Total / H:HTTP / S:SQL)\n\n")
 
 	header := fmt.Sprintf("%-12s %-7s %-18s %-18s %-18s\n", "SERVICE", "ENV", "HOURLY(T/H/S)", "DAILY(T/H/S)", "MONTHLY(T/H/S)")
 	b.WriteString(header)

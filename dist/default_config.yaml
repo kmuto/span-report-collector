@@ -1,0 +1,23 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: {{OTLP_ENDPOINT_GRPC}}
+      http:
+        endpoint: {{OTLP_ENDPOINT_HTTP}}
+
+exporters:
+  spanreportexporter:
+    path: {{REPORT_PATH}}
+    report_interval: {{REPORT_INTERVAL}}
+    tui: {{TUI_ENABLED}}
+    verbose: {{VERBOSE_LOGGING}}
+
+service:
+  telemetry:
+    logs:
+      level: {{LOG_LEVEL}}
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [spanreportexporter]
