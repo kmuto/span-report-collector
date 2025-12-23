@@ -181,4 +181,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/kmuto/span-report-collector/spanreportexporter v0.0.7 => /home/kmuto/job/hatena/span-report-collector/spanreportexporter
+replace github.com/kmuto/span-report-collector/spanreportexporter v0.0.12 => ../spanreportexporter
