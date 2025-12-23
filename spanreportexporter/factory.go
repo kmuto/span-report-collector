@@ -33,7 +33,7 @@ func createDefaultConfig() component.Config {
 		FilePath:       "./span_report.txt",
 		Verbose:        false,
 		ReportInterval: "1h",
-		TUI:            false,
+		TUI:            true,
 	}
 }
 
