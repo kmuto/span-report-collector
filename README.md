@@ -4,6 +4,8 @@
 
 `span-report-collector` aggregates the number of received Spans per `service.name` and `deployment.environment.name`, and exports hourly, daily, and monthly statistics to a file.
 
+![](./diagram-en.png)
+
 Since it retains full Collector functionality, it can also act as a gateway to forward trace data to external backends such as Jaeger, SigNoz, or Mackerel while simultaneously performing aggregation.
 
 ## Key Features
