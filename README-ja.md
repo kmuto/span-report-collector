@@ -80,11 +80,41 @@ TUI モードでは、以下のキー操作が可能です。
 | `SPAN_REPORT_OTLP_ENDPOINT_GRPC` | gRPC レシーバーの待機アドレス | `localhost:4317` |
 | `SPAN_REPORT_OTLP_ENDPOINT_HTTP` | HTTP レシーバーの待機アドレス | `localhost:4318` |
 
-#### 非 TUI モードで起動し、ポートを外部へ公開する場合
+#### ポートを外部へ公開する場合
+
+自ホストではなくほかのホストからのトレースを受け取るには、以下のように待機アドレスの環境変数を指定して実行します。
 
 ```sh
-SPAN_REPORT_TUI=false SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
+SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
 ```
+
+## コンテナで利用する
+
+span-report-collector の Docker イメージを GitHub Container Registry `ghcr.io/kmuto/span-report-collector:latest` で提供しています。
+
+```sh
+docker pull ghcr.io/kmuto/span-report-collector:latest
+```
+
+Docker Composeでの設定例を示します。レポートをホスト側で確認できるよう、ファイルをマウントすることをお勧めします。
+
+```yaml
+services:
+  span-report-collector:
+      image: ghcr.io/kmuto/span-report-collector:latest
+      environment:
+        - SPAN_REPORT_PATH=/logs/span_report.txt
+      volumes:
+        - ./logs:/logs
+      networks:
+        - mynetwork
+```
+
+コンテナ環境での互換性を確保するために、コンテナイメージは以下のデフォルト設定がされています:
+
+* **`SPAN_REPORT_TUI=false`**: コンテナは非インタラクティブモードで通常動作するので、デフォルトで無効
+* **`SPAN_REPORT_OTLP_ENDPOINT_GRPC=0.0.0.0:4317`**: コンテナネットワーク内からのトレース送信を許可する設定
+* **`SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318`**: コンテナネットワーク内からのトレース送信を許可する設定
 
 ## 独自の構成ファイルを使用する
 

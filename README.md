@@ -83,6 +83,46 @@ You can customize the behavior using the following environment variables:
 | `SPAN_REPORT_OTLP_ENDPOINT_GRPC` | Listen address for gRPC receiver | `localhost:4317` |
 | `SPAN_REPORT_OTLP_ENDPOINT_HTTP` | Listen address for HTTP receiver | `localhost:4318` |
 
+#### Exposing Ports to Remote Hosts
+
+To receive traces from other hosts instead of just localhost, specify the listening address using environment variables:
+
+```sh
+SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
+```
+
+## Using with Containers
+
+The Docker image for `span-report-collector` is available on GitHub Container Registry at `ghcr.io/kmuto/span-report-collector:latest`.
+
+```sh
+docker pull ghcr.io/kmuto/span-report-collector:latest
+```
+
+### Docker Compose Example
+
+Mounting a volume to access the report files from your host machine is recommended.
+
+```yaml
+services:
+  span-report-collector:
+      image: ghcr.io/kmuto/span-report-collector:latest
+      environment:
+        - SPAN_REPORT_PATH=/logs/span_report.txt
+      volumes:
+        - ./logs:/logs
+      networks:
+        - mynetwork
+```
+
+### Default Environment Variables in Container
+
+The container image comes with the following default settings to ensure compatibility with containerized environments:
+
+* **`SPAN_REPORT_TUI=false`**: Disabled by default as containers typically run in non-interactive mode.
+* **`SPAN_REPORT_OTLP_ENDPOINT_GRPC=0.0.0.0:4317`**: Configured to allow trace submission from within the container network.
+* **`SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318`**: Configured to allow trace submission from within the container network.
+
 #### Example: Launch in non-TUI mode and expose the endpoint
 
 ```sh
