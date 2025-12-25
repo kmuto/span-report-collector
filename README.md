@@ -123,12 +123,6 @@ The container image comes with the following default settings to ensure compatib
 * **`SPAN_REPORT_OTLP_ENDPOINT_GRPC=0.0.0.0:4317`**: Configured to allow trace submission from within the container network.
 * **`SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318`**: Configured to allow trace submission from within the container network.
 
-#### Example: Launch in non-TUI mode and expose the endpoint
-
-```sh
-SPAN_REPORT_TUI=false SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318 ./span-report-collector
-```
-
 ## Using a Custom Configuration File
 
 To use a custom `config.yaml`, use the `--config` flag. In this case, the environment variables mentioned above are ignored, and the settings in the file take precedence.
