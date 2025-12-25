@@ -118,6 +118,10 @@ exporters:
     verbose: false
   otlphttp/mackerel:
     endpoint: https://otlp-vaxila.mackerelio.com
+    sending_queue:
+      batch:
+        flush_timeout: 10s
+        max_size: 5120
     compression: gzip
     headers:
       Mackerel-Api-Key: ${env:MACKEREL_APIKEY}
