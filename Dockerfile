@@ -18,5 +18,6 @@ COPY --from=builder /app/dist/span-report-collector /span-report-collector
 EXPOSE 4317 4318
 ENV SPAN_REPORT_OTLP_ENDPOINT_GRPC=0.0.0.0:4317
 ENV SPAN_REPORT_OTLP_ENDPOINT_HTTP=0.0.0.0:4318
+ENV SPAN_REPORT_TUI=false
 
 ENTRYPOINT ["/span-report-collector"]
