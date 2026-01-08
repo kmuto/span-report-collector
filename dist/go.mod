@@ -7,9 +7,9 @@ go 1.24.0
 require (
 	github.com/kmuto/span-report-collector/spanreportexporter v0.0.12
 	go.opentelemetry.io/collector/component v1.48.0
-	go.opentelemetry.io/collector/confmap v1.48.0
+	go.opentelemetry.io/collector/confmap v1.49.0
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.48.0
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.48.0
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.49.0
 	go.opentelemetry.io/collector/confmap/provider/httpprovider v1.48.0
 	go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.48.0
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.48.0
@@ -22,7 +22,6 @@ require (
 	go.opentelemetry.io/collector/receiver v1.48.0
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.142.0
 	go.opentelemetry.io/collector/service v0.142.0
-	golang.org/x/sys v0.39.0
 )
 
 require (
@@ -125,7 +124,7 @@ require (
 	go.opentelemetry.io/collector/extension/extensionmiddleware v0.142.0 // indirect
 	go.opentelemetry.io/collector/extension/extensiontest v0.142.0 // indirect
 	go.opentelemetry.io/collector/extension/xextension v0.142.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.48.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.49.0 // indirect
 	go.opentelemetry.io/collector/internal/fanoutconsumer v0.142.0 // indirect
 	go.opentelemetry.io/collector/internal/sharedcomponent v0.142.0 // indirect
 	go.opentelemetry.io/collector/internal/telemetry v0.142.0 // indirect
@@ -172,6 +171,7 @@ require (
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 // indirect
