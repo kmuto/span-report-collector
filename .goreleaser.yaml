@@ -2,10 +2,10 @@ version: 2
 project_name: span-report-collector
 
 archives:
-  - format: tar.gz
+  - formats: [ 'tar.gz' ]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [ 'zip' ]
     files:
       - README.md
       - README-ja.md
